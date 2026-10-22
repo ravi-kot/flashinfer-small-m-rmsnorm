@@ -100,6 +100,8 @@ A later sweep repeated the method with three new rounds at H=2048 and two rounds
 | H=4096 BF16 | -0.014 | **-0.441** | **-0.428** | **-0.383** | **-0.157** | – | +0.035 (tie) |
 | H=2048 FP16 | -0.003 | **-0.391** | **-0.606** | **-0.622** | **-0.423** | – | +0.034 (tie) |
 
+The dashes at M=96 mean **not run**, rather than missing or failed results. I used the full M boundary sweep for the primary H=2048 BF16 configuration. The cross-hidden-size and dtype sensitivity sweeps were narrower: M=64 tested the proposed upper dispatch limit, while M=144 tested a point clearly outside it. This kept the cross-configuration matrix focused on the guarded `M <= 64` decision, so M=96 was measured only in the primary boundary sweep.
+
 The most useful result beyond the 1.60x peak is consistency: M=4 through M=64 improved in every tested hidden-size and dtype configuration, and every corresponding confidence interval excluded zero.
 
 At H=2048 the one-row kernel was faster at every tested M from 2 to 96 and tied at 144 and 2304. The M=576 measurement moved in the favorable direction, but its A/A control moved as well, so it is excluded from the dispatch decision. At H=4096 the modified mapping launches 64-thread blocks, two warps per row, and the gain held through M=64.

@@ -255,6 +255,7 @@ code{font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#26584d;
 </tr>
 </tbody>
 </table></div>
+<p>The dashes at M=96 mean <strong>not run</strong>, rather than missing or failed results. I used the full M boundary sweep for the primary H=2048 BF16 configuration. The cross-hidden-size and dtype sensitivity sweeps were narrower: M=64 tested the proposed upper dispatch limit, while M=144 tested a point clearly outside it. This kept the cross-configuration matrix focused on the guarded <code>M &lt;= 64</code> decision, so M=96 was measured only in the primary boundary sweep.</p>
 <p>The most useful result beyond the 1.60x peak is consistency: M=4 through M=64 improved in every tested hidden-size and dtype configuration, and every corresponding confidence interval excluded zero.</p>
 <p>At H=2048 the one-row kernel was faster at every tested M from 2 to 96 and tied at 144 and 2304. The M=576 measurement moved in the favorable direction, but its A/A control moved as well, so it is excluded from the dispatch decision. At H=4096 the modified mapping launches 64-thread blocks, two warps per row, and the gain held through M=64.</p>
 <p>The expanded raw results and launch records are in <a href="data/kernel/validation/" target="_blank" rel="noopener noreferrer"><code>data/kernel/validation/</code></a>.</p>
