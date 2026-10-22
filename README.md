@@ -7,9 +7,9 @@ Ravi Kothari · October 21, 2026 · RTX 5070 Laptop (SM120) · BF16 · H=2048
 
 | Best isolated result | Best in-model norm result | Correctness |
 | :--- | :--- | :--- |
-| **1.60x speedup** at M=8 | **1.25x critical-path ratio** at batch 8, guarded dispatch | **117/117** kernel cases matched, plus an extended M, H and dtype matrix |
+| **1.60x speedup** at M=8 | **1.25x PDL-adjusted norm-path ratio** at batch 8, guarded dispatch | **117/117** kernel cases matched, plus an extended M, H and dtype matrix |
 
-> **Summary:** In the tested SGLang 0.5.21 environment, FlashInfer 0.6.18's default CuTe kernel puts four token rows in one CUDA block for this shape. At small M, this gives the GPU very few blocks to schedule. Changing the mapping to one row per block lowered isolated kernel latency by **26.86% to 37.35% at M=4 to 36**. An expanded sweep led to a guarded dispatch range of **4 ≤ M ≤ 64**. Inside Qwen3.5-2B, that rule reduced normalization critical-path time by **12% to 20% at batch 4 to 32**, while batches 1 and 2 continued to use the installed FlashInfer 0.6.18 kernel. Saved model outputs matched bit for bit.
+> **Summary:** In the tested SGLang 0.5.21 environment, FlashInfer 0.6.18's default CuTe kernel puts four token rows in one CUDA block for this shape. At small M, this gives the scheduler very few independent blocks to distribute across SMs. Changing the mapping to one row per block lowered isolated kernel latency by **26.86% to 37.35% at M=4 to 36**. An expanded sweep led to a guarded dispatch range of **4 ≤ M ≤ 64**. Inside Qwen3.5-2B, that rule reduced the PDL-adjusted normalization-path estimate by **12% to 20% at batch 4 to 32**, while batches 1 and 2 continued to use the installed FlashInfer 0.6.18 kernel. Saved model outputs matched bit for bit.
 
 ![Measured isolated fused-add RMSNorm latency at small M](assets/latency-small-m.svg)
 
@@ -17,13 +17,13 @@ Ravi Kothari · October 21, 2026 · RTX 5070 Laptop (SM120) · BF16 · H=2048
 
 I started this work after reading Coral Bricks' [Qwen3.6 H100 latency study](https://www.coralbricks.ai/blog/ai-latency-engineering) and its [experiment archive](https://github.com/Coral-Bricks-AI/reef/tree/33aefaa12d78891bf5ba70a0d96b070d471ecc78/research/qwen36-h100).
 
-Their work follows a useful rule: measure the shapes that the model really runs. A kernel that is good for a large batch can waste most of the GPU at a small batch.
+Their work follows a useful rule: measure the shapes that the model really runs. A mapping that works well for a large batch may expose too little independent work for that kernel at a small batch.
 
 That made me interested in how individual GPU kernels perform during small-batch inference. I wondered whether the RMSNorm kernel was already optimized for workloads with only a few token rows.
 
 While tracing SGLang's inference path, I found that its fused-add Gemma RMSNorm operation uses FlashInfer's CuTe implementation. The kernel processes four token rows in one 128-thread CUDA block. For a small workload, that produces only one or two blocks and gives the GPU little independent work to schedule.
 
-I tested whether changing the mapping to one row per CUDA block could expose more parallelism across SMs. I first measured the kernel by itself, then integrated the modification into SGLang's Qwen3.5-2B decode path.
+I tested whether assigning each row to an independent CUDA block could improve grid-level scheduling across SMs. This keeps the total thread and warp counts unchanged at M=4 while giving the scheduler more independent blocks to place. I first measured the kernel by itself, then integrated the modification into SGLang's Qwen3.5-2B decode path.
 
 Coral Bricks measured Qwen3.6-35B-A3B-FP8 on an H100. I used the resources available locally: Qwen3.5-2B in BF16 on an RTX 5070 Laptop GPU (SM120), with hidden size 2048. This is a smaller-scale follow-up rather than a direct H100 comparison. Within this setup, the change produced a repeatable improvement over the installed FlashInfer kernel.
 
@@ -49,8 +49,11 @@ At hidden size 2048, the two configurations are:
 | Rows per block | 4 | 1 |
 | Blocks at M=4 | 1 | 4 |
 | Blocks at M=8 | 2 | 8 |
+| Total threads at M=4 | 128 | 128 |
+| Total warps at M=4 | 4 | 4 |
+| Maximum SMs used at M=4 | 1 | 4 |
 
-A CUDA block runs on one SM. The four warps in the default M=4 block can run together, but all four remain on one SM. The modified mapping gives the scheduler four independent blocks and makes more SMs available for the work.
+A CUDA block runs on one SM. The four warps in the default M=4 block can run together, but all four share one SM's execution and memory resources. The modified mapping gives the scheduler four independently schedulable blocks that can be distributed across as many as four SMs. It changes work placement rather than adding threads, warps, or mathematical operations.
 
 ## 3. The change
 
@@ -63,7 +66,7 @@ The experiment changes the block mapping; the normalisation math remains the sam
 
 I made the matching change to the shared-memory estimate so that the estimate and launch agree. The two-line experimental kernel patch is available in [`one_row_per_cta.diff`](patch/one_row_per_cta.diff). The guarded model experiment used the router described in Section 6 rather than applying this candidate at every M.
 
-This mapping has a cost. It launches more blocks and reads the weight vector once per row. The kernel dispatcher, or router, should select it for small row counts where extra grid parallelism pays for that work. On this GPU, the evidence supports the range `4 <= M <= 64`; the following section shows how I measured those boundaries.
+This mapping has a cost. It launches more blocks and can increase memory traffic and resource overhead across independently scheduled blocks. The kernel dispatcher, or router, should select it for small row counts where the additional scheduling freedom pays for that overhead. On this GPU, the evidence supports the range `4 <= M <= 64`; the following section shows how I measured those boundaries.
 
 ## 4. Isolated kernel results
 
@@ -105,7 +108,7 @@ The expanded raw results and launch records are in [`data/kernel/validation/`](d
 
 ### Why the dispatch starts at M=4
 
-I crossed PDL on and off, CUDA Graph and eager execution, and warm and cold L2 conditions at M=1, 2, 4, and 8. The table below shows the CUDA Graph critical-path difference, one-row minus unchanged copy. Negative is faster.
+I crossed PDL on and off, CUDA Graph and eager execution, and warm and cold L2 conditions at M=1, 2, 4, and 8. The table below shows the captured kernel-path interval difference, one-row minus unchanged copy. Negative is faster.
 
 | Condition | M=1 | M=2 | M=4 | M=8 |
 | :--- | ---: | ---: | ---: | ---: |
@@ -114,7 +117,7 @@ I crossed PDL on and off, CUDA Graph and eager execution, and warm and cold L2 c
 | Warm L2, PDL off | +0.10 µs | -0.07 µs | **-0.40 µs** | **-0.56 µs** |
 | Cold L2, PDL off | +0.56 µs | +0.77 µs | **-0.25 µs** | **-0.28 µs** |
 
-M=1 gained no additional grid parallelism and regressed with cold data. M=2 depended on cache and PDL state. M=4 and M=8 improved in every captured condition. Turning PDL off did not remove the M=1 cold-data penalty, so dependency-wait accounting is not its sole cause. Eager critical-path measurements contained large CPU launch gaps; the captured results match the model's CUDA Graph execution more closely. This evidence supports using the installed kernel below M=4.
+M=1 gained no additional grid parallelism and regressed with cold data. M=2 depended on cache and PDL state. M=4 and M=8 improved in every captured condition. Turning PDL off did not remove the M=1 cold-data penalty, so dependency-wait accounting is not its sole cause. Eager path-interval measurements contained large CPU launch gaps; the captured results match the model's CUDA Graph execution more closely. This evidence supports using the installed kernel below M=4.
 
 ### What the profiler showed
 
@@ -133,7 +136,7 @@ Nsight Compute compared the unchanged local CuTe copy with the one-row candidate
 
 The “effective active-SM equivalents” estimate is `36 x sm__cycles_active.avg / sm__cycles_active.max`. NVIDIA documents `.avg` and `.max` as rollups across hardware-unit instances in the [Nsight Compute Profiling Guide](https://docs.nvidia.com/nsight-compute/ProfilingGuide/). This is a useful activity estimate, not an exact count of physical SMs. The grid size gives the direct scheduling bound: one block can use at most one SM, while four independent blocks can be scheduled across more SMs.
 
-In this Nsight Compute capture, the reported register count was 124 per thread for both kernels. The one-row mapping reduced the profiler's theoretical occupancy figure from 25.0% to 20.8%, yet it exposed enough independent blocks to use more SMs. At M=8, measured L2 traffic rose from 142.8 KB to 168.4 KB because each block reread the weight vector, while busiest-SM cycles fell by 42% and long-scoreboard stalls nearly halved. The result is a useful tradeoff: more traffic and lower per-block occupancy, but a shorter critical path because the rows are no longer concentrated on two SMs.
+In this Nsight Compute capture, the reported register count was 124 per thread for both kernels. The one-row mapping reduced the profiler's theoretical occupancy figure from 25.0% to 20.8%, yet gave the scheduler more independent blocks to distribute. At M=8, measured L2 traffic rose from 142.8 KB to 168.4 KB, consistent with reduced locality or duplicated memory requests across independently scheduled blocks. Despite that overhead, busiest-SM active cycles fell by 42% and long-scoreboard stalls nearly halved. The profiler therefore shows a concrete tradeoff: higher measured L2 traffic and lower theoretical occupancy alongside fewer active cycles on the busiest SM at small M.
 
 These results support **insufficient grid-level parallelism** as the opportunity. They do not prove that DRAM bandwidth or a particular cache level was the bottleneck.
 
@@ -161,9 +164,9 @@ I used [`Qwen/Qwen3.5-2B`](https://huggingface.co/Qwen/Qwen3.5-2B). It has hidde
 
 The final model experiment used a guarded router: one row per block for `4 <= M <= 64`, and the installed kernel everywhere else. SGLang decoded with CUDA Graphs at batches 1, 2, 4, 8, 16, and 32. Each arm ran four alternating rounds with 300 timed decode steps per batch. A separate three-step CUPTI trace in every round verified the kernel inside the graph.
 
-Each decode step contained 48 fused-add normalization calls. The table reports their total **critical-path time**: each norm's end minus the previous kernel's end. This removes time that a PDL-launched kernel spends waiting for its predecessor. It agreed with summed CUPTI duration to within 0.3 microseconds per step.
+Each decode step contained 48 fused-add normalization calls. For each call, I measured the interval between the preceding kernel's completion and the normalization kernel's completion, then summed those intervals. This **PDL-adjusted normalization-path time** reduces the influence of early PDL launches. It is an estimate of normalization's incremental timing contribution, not a reconstruction of the model's full dependency-graph critical path. It agreed with summed CUPTI kernel duration to within 0.3 microseconds per step.
 
-| Decode batch | Default norm time | Guarded dispatch | Latency reduction | Kernel selected |
+| Decode batch | Default PDL-adjusted norm path | Guarded dispatch | Latency reduction | Kernel selected |
 | ---: | ---: | ---: | ---: | :--- |
 | 1 | 67.7 µs | 66.9 µs | - | Installed fallback |
 | 2 | 85.6 µs | 84.9 µs | - | Installed fallback |
@@ -234,7 +237,7 @@ The full-step data therefore serves as an integration check: model outputs staye
 
 ## 10. Findings and limits
 
-This experiment shows that a one-row-per-block mapping reduced a small-grid parallelism limit for the tested fused-add RMSNorm shapes. It reached **1.60x isolated speedup at M=8** and reduced Qwen3.5-2B normalization critical-path time by **12% to 20% at batch 4 to 32** with a guarded `4 <= M <= 64` dispatch. The installed kernel remains the fallback outside that range.
+This experiment shows that a one-row-per-block mapping reduced a small-grid scheduling limit for the tested fused-add RMSNorm shapes. It reached **1.60x isolated speedup at M=8** and reduced Qwen3.5-2B's PDL-adjusted normalization-path estimate by **12% to 20% at batch 4 to 32** with a guarded `4 <= M <= 64` dispatch. The installed kernel remains the fallback outside that range.
 
 More broadly, the result shows that small-M RMSNorm workloads can still contain useful, shape-specific optimization opportunities when the default launch exposes too little parallel work.
 
@@ -247,3 +250,4 @@ The implementation matched all **117 original kernel cases**, the expanded M, hi
 - A production MTP result.
 - A request-level throughput, TTFT, or TPOT improvement.
 - A dispatch range for GPU architectures beyond SM120.
+- A result for Coral Bricks' fused normalization-and-MoE-router path. This patch targets FlashInfer's standalone fused-add RMSNorm implementation; applying the idea to their custom stack would require adapting the mapping and measuring it directly.
