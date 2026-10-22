@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="A FlashInfer CuTe fused-add RMSNorm experiment with up to 1.60x isolated speedup on an RTX 5070 Laptop GPU and validation inside Qwen3.5-2B." />
+<meta name="theme-color" content="#faf9f6" />
+<title>One Row per Block — FlashInfer RMSNorm · Ravi Kothari</title>
+<style>
+:root { --ink:#1e2b34; --muted:#60717a; --soft:#8b9699; --border:#e6e8e3; --teal:#126c60; --page:#faf9f6; --paper:#fff; --shade:#f5f7f4; }
+*{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--page);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{color:#0b5148}
+.wrap{max-width:1260px;margin:auto;padding:0 34px}.topbar{height:74px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.topbar .brand{font-family:Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;letter-spacing:-.3px;color:var(--ink);text-decoration:none}.topbar .tag{color:var(--muted);font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+header.hero{padding:75px 0 30px;max-width:1010px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.19em;text-transform:uppercase;color:var(--teal)}
+h1{font:700 clamp(2.65rem,5.4vw,4.5rem)/1.09 Georgia,'Times New Roman',serif;letter-spacing:-.045em;margin:21px 0 21px;max-width:930px}
+.deck{font-size:clamp(1.03rem,1.6vw,1.29rem);line-height:1.65;color:var(--muted);max-width:780px;margin-bottom:24px}
+.meta{font-size:13px;color:var(--soft);letter-spacing:.02em}.meta strong{color:var(--ink);font-weight:600}
+.stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:34px 0 28px}.stat{border:1px solid var(--border);border-radius:12px;padding:22px 19px;background:var(--paper);min-height:138px}.stat .val{font-size:clamp(1.65rem,2.7vw,2.25rem);font-weight:750;line-height:1.15;letter-spacing:-.055em;color:var(--teal)}.stat .label{font-size:13px;margin-top:12px;line-height:1.5;color:var(--muted)}
+.summary{max-width:1010px;background:#eef4f0;border:1px solid #dbe8e0;border-radius:12px;padding:24px 28px;line-height:1.7;color:#284438}.summary strong{color:#143d33}
+.figure{max-width:1010px;margin:27px 0 49px;overflow:hidden;border-radius:16px;border:1px solid var(--border);background:var(--paper)}.figure img{display:block;width:100%;height:auto}.figcaption{padding:3px 25px 20px;font-size:12px;color:var(--muted)}
+.content-grid{display:grid;grid-template-columns:minmax(0,780px) 235px;gap:65px;padding-bottom:90px;align-items:start}.article{min-width:0;font-size:15.5px}.article h2{font:700 2rem/1.2 Georgia,'Times New Roman',serif;letter-spacing:-.025em;margin:65px 0 19px;scroll-margin-top:24px}.article h3{font:700 1.24rem/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:39px 0 12px}.article p{margin:0 0 19px}.article ul,.article ol{padding-left:24px}.article li{margin-bottom:8px}.article hr{border:0;border-top:1px solid var(--border);margin:53px 0}
+.article blockquote{border-left:3px solid var(--teal);background:#eff4ef;padding:14px 20px;margin:25px 0;border-radius:0 8px 8px 0}.article blockquote p{margin:0}
+.table-scroll{overflow-x:auto;margin:19px 0 25px;border:1px solid var(--border);border-radius:9px;background:#fff}.article table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.5;min-width:600px}.article th{text-align:left;background:#f5f7f4;color:#3a4b56;white-space:nowrap;font-weight:650;border-bottom:1px solid var(--border)}.article th,.article td{padding:13px 13px;border-bottom:1px solid #eef0ec}.article tbody tr:last-child td{border-bottom:0}.article tbody tr:hover{background:#f9fbf9}.article td strong{color:var(--teal)}
+code{font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#26584d;background:#eef3ef;border-radius:4px;padding:2px 5px}pre{overflow-x:auto;border:1px solid #e4e8e5;background:#f3f6f3;border-radius:9px;padding:19px;margin:23px 0}pre code{background:none;padding:0;color:#34474f;line-height:1.7}
+.toc{position:sticky;top:26px;margin-top:55px;border-left:1px solid var(--border);padding-left:20px}.toc .toc-head{color:var(--soft);text-transform:uppercase;letter-spacing:.17em;font-size:11px;font-weight:700;margin-bottom:17px}.toc a{font-size:13px;line-height:1.4;display:block;margin:0 0 12px;text-decoration:none;color:#657680}.toc a:hover{color:var(--teal)}
+.footer{border-top:1px solid var(--border);padding:24px 0 52px;color:var(--muted);font-size:13px}
+@media(max-width:940px){.content-grid{grid-template-columns:1fr}.toc{display:none}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:0 22px}header.hero{padding-top:50px}.article h2{margin-top:50px}}
+@media(max-width:530px){html,body{width:100%;max-width:100%;overflow-x:hidden}.wrap{width:100vw;max-width:100vw;overflow-x:hidden}.topbar,header.hero,.stat-grid,.summary,.figure,.content-grid{width:calc(100vw - 44px);max-width:calc(100vw - 44px)}.content-grid,.article,header.hero,.summary,.figure{min-width:0}.stat-grid{grid-template-columns:1fr;gap:9px}.stat{padding:16px 14px;min-height:0}.stat .val{font-size:1.75rem}.topbar{height:62px}.topbar .brand{font-size:16px}.topbar .tag{display:none}.article table{font-size:12px}.summary{padding:18px}.hero h1{font-size:2.15rem;line-height:1.08}.deck{font-size:1rem}h1,.deck,.meta,.summary,.article p{overflow-wrap:anywhere}}
+@media print{body{background:#fff}.toc{display:none}.content-grid{display:block}.topbar{height:auto}.stat,.summary{break-inside:avoid}.article h2{break-after:avoid}.article .table-scroll{overflow:visible}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="topbar"><a class="brand" href="index.html">Ravi Kothari <span style="font-weight:400;color:#8b9699">/ Research Notes</span></a><span class="tag">GPU performance · 2026</span></div>
+<header class="hero"><h1>One Row per Block:<br/>Up to 1.60x Faster Fused RMSNorm</h1>
+<div class="deck">A small CUDA block-mapping change, measured from one kernel to real Qwen3.5-2B decoding in SGLang.</div>
+<div class="meta"><strong>Ravi Kothari</strong> &nbsp;·&nbsp; October 21, 2026 &nbsp;·&nbsp; RTX 5070 Laptop (SM120) &nbsp;·&nbsp; BF16</div></header>
+<div class="stat-grid"><div class="stat"><div class="val">1.60x</div><div class="label">Isolated speedup at M=8<br/>from 1.625 to 1.018 µs</div></div><div class="stat"><div class="val">1.25x</div><div class="label">Norm critical-path time in Qwen3.5-2B<br/>at batch 8, guarded 4 ≤ M ≤ 64</div></div><div class="stat"><div class="val">117 / 117</div><div class="label">Kernel equivalence checks passed<br/>plus extended M, H and dtype matrix; model outputs matched</div></div></div>
+<div class="summary"><strong>Finding.</strong> At small M, the default kernel puts several rows in a very small grid. Giving each row its own block exposes more GPU parallelism. A guarded 4 ≤ M ≤ 64 dispatch cuts the model’s norm critical-path time by 12% to 20% at batch 4 to 32, while smaller shapes keep the installed kernel. Outputs matched in every tested case.</div>
+<div class="figure"><img src="assets/latency-small-m.svg" alt="Graph showing faster one-row-per-block fused RMSNorm timings versus the default CuTe implementation at M=2–36"/><div class="figcaption">Isolated, L2-warm CUDA Graph experiment. The separate M=2304 no-gain case is included in the full table below.</div></div>
+<div class="content-grid"><article class="article"><p><a id="question"></a></p>
+<h2>1. The question</h2>
+<p>I started this work after reading Coral Bricks' <a href="https://www.coralbricks.ai/blog/ai-latency-engineering" target="_blank" rel="noopener noreferrer">Qwen3.6 H100 latency study</a> and its <a href="https://github.com/Coral-Bricks-AI/reef/tree/33aefaa12d78891bf5ba70a0d96b070d471ecc78/research/qwen36-h100" target="_blank" rel="noopener noreferrer">experiment archive</a>.</p>
+<p>Their work follows a useful rule: measure the shapes that the model really runs. A kernel that is good for a large batch can waste most of the GPU at a small batch.</p>
+<p>That made me interested in how individual GPU kernels perform during small-batch inference. I wondered whether the RMSNorm kernel was already optimized for workloads with only a few token rows.</p>
+<p>While tracing SGLang's inference path, I found that its fused-add Gemma RMSNorm operation uses FlashInfer's CuTe implementation. The kernel processes four token rows in one 128-thread CUDA block. For a small workload, that produces only one or two blocks and gives the GPU little independent work to schedule.</p>
+<p>I tested whether changing the mapping to one row per CUDA block could expose more parallelism across SMs. I first measured the kernel by itself, then integrated the modification into SGLang's Qwen3.5-2B decode path.</p>
+<p>Coral Bricks measured Qwen3.6-35B-A3B-FP8 on an H100. I used the resources available locally: Qwen3.5-2B in BF16 on an RTX 5070 Laptop GPU (SM120), with hidden size 2048. This is a smaller-scale follow-up rather than a direct H100 comparison. Within this setup, the change produced a repeatable improvement over the installed FlashInfer kernel.</p>
+<p><a id="runtime-path"></a></p>
+<h2>2. Finding the kernel that really runs</h2>
+<p>In SGLang 0.5.21, the model calls <code>gemma_fused_add_rmsnorm</code>. On this machine, that call reaches FlashInfer 0.6.18's CuTe DSL <code>FusedAddRMSNormKernel</code>.</p>
+<p>The operator performs two jobs:</p>
+<ol>
+<li>Add the residual to the input.</li>
+<li>Apply Gemma-style RMSNorm.</li>
+</ol>
+<p>I checked the runtime path and recorded the kernel name and launch shape. PDL was enabled, and the model launched one fused kernel per call.</p>
+<blockquote>
+<p><strong>Configuration change:</strong> I kept the hidden size and normalization arithmetic fixed, but changed the launch from four rows in one 128-thread block to one row in each 32-thread block. The grid therefore grows from <code>ceil(M / 4)</code> blocks to <code>M</code> blocks.</p>
+</blockquote>
+<p>At hidden size 2048, the two configurations are:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:left">Launch property</th>
+<th style="text-align:right">Default CuTe</th>
+<th style="text-align:right">Modified mapping</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Threads per block</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">32</td>
+</tr>
+<tr>
+<td style="text-align:left">Warps per block</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">1</td>
+</tr>
+<tr>
+<td style="text-align:left">Rows per block</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">1</td>
+</tr>
+<tr>
+<td style="text-align:left">Blocks at M=4</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td style="text-align:left">Blocks at M=8</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8</td>
+</tr>
+</tbody>
+</table></div>
+<p>A CUDA block runs on one SM. The four warps in the default M=4 block can run together, but all four remain on one SM. The modified mapping gives the scheduler four independent blocks and makes more SMs available for the work.</p>
+<p><a id="change"></a></p>
+<h2>3. The change</h2>
+<p>The experiment changes the block mapping; the normalisation math remains the same.</p>
+<pre><code class="language-diff">- self.num_threads = RMSNormKernel._compute_num_threads(self.H_per_cta)
++ self.num_threads = self.threads_per_row
+</code></pre>
+<p>I made the matching change to the shared-memory estimate so that the estimate and launch agree. The two-line experimental kernel patch is available in <a href="patch/one_row_per_cta.diff" target="_blank" rel="noopener noreferrer"><code>one_row_per_cta.diff</code></a>. The guarded model experiment used the router described in Section 6 rather than applying this candidate at every M.</p>
+<p>This mapping has a cost. It launches more blocks and reads the weight vector once per row. The kernel dispatcher, or router, should select it for small row counts where extra grid parallelism pays for that work. On this GPU, the evidence supports the range <code>4 &lt;= M &lt;= 64</code>; the following section shows how I measured those boundaries.</p>
+<p><a id="kernel-results"></a></p>
+<h2>4. Isolated kernel results</h2>
+<p>The benchmark used BF16 inputs, hidden size 2048, CUDA Graph replay, and L2-warm data. Each small-M result contains 60 paired measurements from three processes. An unchanged local copy served as an A/A control and stayed within about 0.01 microseconds of the installed kernel for M up to 36.</p>
+<p>Latency reduction is <code>(default - modified) / default x 100</code>. Lower latency is better.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:right">Token rows (M)</th>
+<th style="text-align:right">Default CuTe</th>
+<th style="text-align:right">Modified</th>
+<th style="text-align:right">Latency reduction</th>
+<th style="text-align:left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">0.984 µs</td>
+<td style="text-align:right">0.990 µs</td>
+<td style="text-align:right">-0.61%</td>
+<td style="text-align:left">Almost identical</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">1.138 µs</td>
+<td style="text-align:right">1.047 µs</td>
+<td style="text-align:right">8.00%</td>
+<td style="text-align:left">Improvement</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">1.415 µs</td>
+<td style="text-align:right">1.035 µs</td>
+<td style="text-align:right"><strong>26.86%</strong></td>
+<td style="text-align:left"><strong>Improvement</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">5</td>
+<td style="text-align:right">1.433 µs</td>
+<td style="text-align:right">1.024 µs</td>
+<td style="text-align:right"><strong>28.54%</strong></td>
+<td style="text-align:left"><strong>Improvement</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">1.625 µs</td>
+<td style="text-align:right">1.018 µs</td>
+<td style="text-align:right"><strong>37.35%</strong></td>
+<td style="text-align:left"><strong>Improvement</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">36</td>
+<td style="text-align:right">1.679 µs</td>
+<td style="text-align:right">1.055 µs</td>
+<td style="text-align:right"><strong>37.16%</strong></td>
+<td style="text-align:left"><strong>Improvement</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">2304</td>
+<td style="text-align:right">14.740 µs</td>
+<td style="text-align:right">14.800 µs</td>
+<td style="text-align:right">-0.41%</td>
+<td style="text-align:left">Almost identical</td>
+</tr>
+</tbody>
+</table></div>
+<p>At M=8, latency fell from 1.625 microseconds to 1.018 microseconds. That is a <strong>1.60x speedup</strong>. At M=2304, the small difference is comparable to the experiment's noise and does not establish a gain or meaningful loss.</p>
+<p>The saving also remained in a dependent producer, norm, and consumer chain. This control matters because an isolated warm-cache kernel can hide costs that appear when the operation is surrounded by real work.</p>
+<h3>Boundary and sensitivity</h3>
+<p>A later sweep repeated the method with three new rounds at H=2048 and two rounds for each other configuration. Values are the paired difference, one-row minus the unchanged copy, in microseconds. Bold marks a 95% confidence interval that excludes zero.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:left">Configuration</th>
+<th style="text-align:right">M=1</th>
+<th style="text-align:right">M=4</th>
+<th style="text-align:right">M=8</th>
+<th style="text-align:right">M=36</th>
+<th style="text-align:right">M=64</th>
+<th style="text-align:right">M=96</th>
+<th style="text-align:right">M=144</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">H=2048 BF16</td>
+<td style="text-align:right">-0.015</td>
+<td style="text-align:right"><strong>-0.398</strong></td>
+<td style="text-align:right"><strong>-0.610</strong></td>
+<td style="text-align:right"><strong>-0.635</strong></td>
+<td style="text-align:right"><strong>-0.428</strong></td>
+<td style="text-align:right"><strong>-0.159</strong></td>
+<td style="text-align:right">-0.018 (tie)</td>
+</tr>
+<tr>
+<td style="text-align:left">H=1024 BF16</td>
+<td style="text-align:right">+0.003</td>
+<td style="text-align:right"><strong>-0.180</strong></td>
+<td style="text-align:right"><strong>-0.283</strong></td>
+<td style="text-align:right"><strong>-0.231</strong></td>
+<td style="text-align:right"><strong>-0.152</strong></td>
+<td style="text-align:right">–</td>
+<td style="text-align:right">-0.017 (tie)</td>
+</tr>
+<tr>
+<td style="text-align:left">H=2560 BF16</td>
+<td style="text-align:right">+0.024</td>
+<td style="text-align:right"><strong>-0.490</strong></td>
+<td style="text-align:right"><strong>-0.793</strong></td>
+<td style="text-align:right"><strong>-0.765</strong></td>
+<td style="text-align:right"><strong>-0.561</strong></td>
+<td style="text-align:right">–</td>
+<td style="text-align:right">+0.001 (tie)</td>
+</tr>
+<tr>
+<td style="text-align:left">H=4096 BF16</td>
+<td style="text-align:right">-0.014</td>
+<td style="text-align:right"><strong>-0.441</strong></td>
+<td style="text-align:right"><strong>-0.428</strong></td>
+<td style="text-align:right"><strong>-0.383</strong></td>
+<td style="text-align:right"><strong>-0.157</strong></td>
+<td style="text-align:right">–</td>
+<td style="text-align:right">+0.035 (tie)</td>
+</tr>
+<tr>
+<td style="text-align:left">H=2048 FP16</td>
+<td style="text-align:right">-0.003</td>
+<td style="text-align:right"><strong>-0.391</strong></td>
+<td style="text-align:right"><strong>-0.606</strong></td>
+<td style="text-align:right"><strong>-0.622</strong></td>
+<td style="text-align:right"><strong>-0.423</strong></td>
+<td style="text-align:right">–</td>
+<td style="text-align:right">+0.034 (tie)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The most useful result beyond the 1.60x peak is consistency: M=4 through M=64 improved in every tested hidden-size and dtype configuration, and every corresponding confidence interval excluded zero.</p>
+<p>At H=2048 the one-row kernel was faster at every tested M from 2 to 96 and tied at 144 and 2304. The M=576 measurement moved in the favorable direction, but its A/A control moved as well, so it is excluded from the dispatch decision. At H=4096 the modified mapping launches 64-thread blocks, two warps per row, and the gain held through M=64.</p>
+<p>The expanded raw results and launch records are in <a href="data/kernel/validation/" target="_blank" rel="noopener noreferrer"><code>data/kernel/validation/</code></a>.</p>
+<h3>Why the dispatch starts at M=4</h3>
+<p>I crossed PDL on and off, CUDA Graph and eager execution, and warm and cold L2 conditions at M=1, 2, 4, and 8. The table below shows the CUDA Graph critical-path difference, one-row minus unchanged copy. Negative is faster.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:left">Condition</th>
+<th style="text-align:right">M=1</th>
+<th style="text-align:right">M=2</th>
+<th style="text-align:right">M=4</th>
+<th style="text-align:right">M=8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Warm L2, PDL on</td>
+<td style="text-align:right">+0.03 µs</td>
+<td style="text-align:right">-0.16 µs</td>
+<td style="text-align:right"><strong>-0.59 µs</strong></td>
+<td style="text-align:right"><strong>-0.62 µs</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Cold L2, PDL on</td>
+<td style="text-align:right">+0.40 µs</td>
+<td style="text-align:right">+0.05 µs</td>
+<td style="text-align:right"><strong>-0.34 µs</strong></td>
+<td style="text-align:right"><strong>-1.08 µs</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Warm L2, PDL off</td>
+<td style="text-align:right">+0.10 µs</td>
+<td style="text-align:right">-0.07 µs</td>
+<td style="text-align:right"><strong>-0.40 µs</strong></td>
+<td style="text-align:right"><strong>-0.56 µs</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Cold L2, PDL off</td>
+<td style="text-align:right">+0.56 µs</td>
+<td style="text-align:right">+0.77 µs</td>
+<td style="text-align:right"><strong>-0.25 µs</strong></td>
+<td style="text-align:right"><strong>-0.28 µs</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>M=1 gained no additional grid parallelism and regressed with cold data. M=2 depended on cache and PDL state. M=4 and M=8 improved in every captured condition. Turning PDL off did not remove the M=1 cold-data penalty, so dependency-wait accounting is not its sole cause. Eager critical-path measurements contained large CPU launch gaps; the captured results match the model's CUDA Graph execution more closely. This evidence supports using the installed kernel below M=4.</p>
+<h3>What the profiler showed</h3>
+<p>Nsight Compute compared the unchanged local CuTe copy with the one-row candidate and showed the expected launch geometry:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:left">Measurement</th>
+<th style="text-align:right">Unchanged CuTe copy</th>
+<th style="text-align:right">Modified</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Blocks launched at M=4</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td style="text-align:left">Blocks launched at M=8</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8</td>
+</tr>
+<tr>
+<td style="text-align:left">Effective active-SM equivalents at M=4</td>
+<td style="text-align:right">1.00</td>
+<td style="text-align:right">3.98</td>
+</tr>
+<tr>
+<td style="text-align:left">Effective active-SM equivalents at M=8</td>
+<td style="text-align:right">2.00</td>
+<td style="text-align:right">7.91</td>
+</tr>
+<tr>
+<td style="text-align:left">Busiest-SM active cycles at M=4</td>
+<td style="text-align:right">3,210</td>
+<td style="text-align:right">2,096</td>
+</tr>
+<tr>
+<td style="text-align:left">Busiest-SM active cycles at M=8</td>
+<td style="text-align:right">3,650</td>
+<td style="text-align:right">2,130</td>
+</tr>
+<tr>
+<td style="text-align:left">Long-scoreboard stalls per issued instruction at M=4</td>
+<td style="text-align:right">1.31</td>
+<td style="text-align:right">0.72</td>
+</tr>
+<tr>
+<td style="text-align:left">Long-scoreboard stalls per issued instruction at M=8</td>
+<td style="text-align:right">1.37</td>
+<td style="text-align:right">0.73</td>
+</tr>
+</tbody>
+</table></div>
+<p>The “effective active-SM equivalents” estimate is <code>36 x sm__cycles_active.avg / sm__cycles_active.max</code>. NVIDIA documents <code>.avg</code> and <code>.max</code> as rollups across hardware-unit instances in the <a href="https://docs.nvidia.com/nsight-compute/ProfilingGuide/" target="_blank" rel="noopener noreferrer">Nsight Compute Profiling Guide</a>. This is a useful activity estimate, not an exact count of physical SMs. The grid size gives the direct scheduling bound: one block can use at most one SM, while four independent blocks can be scheduled across more SMs.</p>
+<p>In this Nsight Compute capture, the reported register count was 124 per thread for both kernels. The one-row mapping reduced the profiler's theoretical occupancy figure from 25.0% to 20.8%, yet it exposed enough independent blocks to use more SMs. At M=8, measured L2 traffic rose from 142.8 KB to 168.4 KB because each block reread the weight vector, while busiest-SM cycles fell by 42% and long-scoreboard stalls nearly halved. The result is a useful tradeoff: more traffic and lower per-block occupancy, but a shorter critical path because the rows are no longer concentrated on two SMs.</p>
+<p>These results support <strong>insufficient grid-level parallelism</strong> as the opportunity. They do not prove that DRAM bandwidth or a particular cache level was the bottleneck.</p>
+<p><a id="correctness"></a></p>
+<h2>5. Correctness</h2>
+<p>The modified kernel was checked on 117 cases covering:</p>
+<ul>
+<li>Several random seeds.</li>
+<li>Zeros, cancellation, large values, and tiny values.</li>
+<li>Residual-heavy inputs and wide weights.</li>
+<li>Different row scales to expose accidental mixing between rows.</li>
+<li>Guard rows to catch out-of-range writes.</li>
+</ul>
+<p>The modified output matched the installed and unchanged-copy outputs bit for bit in all 117 cases. Saved tokens and final logits also matched in the original eight-run model test and in all 16 guarded runs.</p>
+<p>The expanded checks added M = 64, 65, 96, 144, 576 and 2304, hidden sizes 1024, 2560 and 4096, and FP16. Every tested case was again bitwise identical.</p>
+<p>This establishes equivalence to the tested implementation for these cases. It does not claim exact agreement with every higher-precision mathematical reference.</p>
+<p>The original output is saved in the <a href="data/kernel/rowmap_check_20261020T064710Z.txt" target="_blank" rel="noopener noreferrer"><code>117-case correctness log</code></a>. The <a href="data/kernel/validation/stages_20261021T220557Z.log" target="_blank" rel="noopener noreferrer"><code>expanded run log</code></a> records the later correctness and launch-geometry checks.</p>
+<p><a id="model"></a></p>
+<h2>6. Testing inside a real model</h2>
+<p>I used <a href="https://huggingface.co/Qwen/Qwen3.5-2B" target="_blank" rel="noopener noreferrer"><code>Qwen/Qwen3.5-2B</code></a>. It has hidden size 2048 and uses the fused-add Gemma-style normalization path studied here.</p>
+<p>The final model experiment used a guarded router: one row per block for <code>4 &lt;= M &lt;= 64</code>, and the installed kernel everywhere else. SGLang decoded with CUDA Graphs at batches 1, 2, 4, 8, 16, and 32. Each arm ran four alternating rounds with 300 timed decode steps per batch. A separate three-step CUPTI trace in every round verified the kernel inside the graph.</p>
+<p>Each decode step contained 48 fused-add normalization calls. The table reports their total <strong>critical-path time</strong>: each norm's end minus the previous kernel's end. This removes time that a PDL-launched kernel spends waiting for its predecessor. It agreed with summed CUPTI duration to within 0.3 microseconds per step.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:right">Decode batch</th>
+<th style="text-align:right">Default norm time</th>
+<th style="text-align:right">Guarded dispatch</th>
+<th style="text-align:right">Latency reduction</th>
+<th style="text-align:left">Kernel selected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">67.7 µs</td>
+<td style="text-align:right">66.9 µs</td>
+<td style="text-align:right">-</td>
+<td style="text-align:left">Installed fallback</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">85.6 µs</td>
+<td style="text-align:right">84.9 µs</td>
+<td style="text-align:right">-</td>
+<td style="text-align:left">Installed fallback</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">101.4 µs</td>
+<td style="text-align:right">89.4 µs</td>
+<td style="text-align:right"><strong>11.9%</strong></td>
+<td style="text-align:left"><strong>One row/block</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">109.3 µs</td>
+<td style="text-align:right">87.4 µs</td>
+<td style="text-align:right"><strong>20.0%</strong></td>
+<td style="text-align:left"><strong>One row/block</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">16</td>
+<td style="text-align:right">133.9 µs</td>
+<td style="text-align:right">110.9 µs</td>
+<td style="text-align:right"><strong>17.2%</strong></td>
+<td style="text-align:left"><strong>One row/block</strong></td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td style="text-align:right">145.0 µs</td>
+<td style="text-align:right">122.3 µs</td>
+<td style="text-align:right"><strong>15.7%</strong></td>
+<td style="text-align:left"><strong>One row/block</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>I verified the dispatch from the kernels captured inside each decode graph. Batches 1 and 2 replayed the installed 128-thread kernel. Batches 4 to 32 replayed the one-row implementation with grid <code>(B, 1, 1)</code> and 32 threads per block. This confirms that graph capture preserved both the optimized route and the fallback selected by the router.</p>
+<p>Saved greedy tokens and final logits matched bit for bit across all 16 guarded runs. The raw model CSVs and metadata are in <a href="data/model/guarded/" target="_blank" rel="noopener noreferrer"><code>data/model/guarded/</code></a>; hashes identify the omitted tensor files.</p>
+<p>This is the normalization portion of a transformer step. Attention, projections, Gated DeltaNet state updates, and runtime scheduling remain outside this measurement.</p>
+<p><a id="reproduce"></a></p>
+<h2>7. Reproduce the experiment</h2>
+<p>The supporting files are included with this article and in the <a href="https://github.com/ravi-kot/flashinfer-small-m-rmsnorm" target="_blank" rel="noopener noreferrer">GitHub repository</a>:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:left">Path</th>
+<th style="text-align:left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><a href="repro/validation/rowmap.py" target="_blank" rel="noopener noreferrer"><code>repro/validation/rowmap.py</code></a></td>
+<td style="text-align:left">Exact correctness, timing, diagnosis, and profiling driver used for the final sweep</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="repro/validation/local_cute/fused_add_rmsnorm_1row.py" target="_blank" rel="noopener noreferrer"><code>repro/validation/local_cute/fused_add_rmsnorm_1row.py</code></a></td>
+<td style="text-align:left">Modified CuTe kernel; the unchanged comparison copy is beside it</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="repro/validation/model_bench.py" target="_blank" rel="noopener noreferrer"><code>repro/validation/model_bench.py</code></a></td>
+<td style="text-align:left">Guarded Qwen3.5-2B model A/B runner</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="repro/validation/onerow_patch.py" target="_blank" rel="noopener noreferrer"><code>repro/validation/onerow_patch.py</code></a></td>
+<td style="text-align:left">Runtime router used to test the guarded dispatch without modifying installed packages</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="data/README.md" target="_blank" rel="noopener noreferrer"><code>data/README.md</code></a></td>
+<td style="text-align:left">Guide to raw measurements, metadata, profiler metrics, and artifact hashes</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="patch/one_row_per_cta.diff" target="_blank" rel="noopener noreferrer"><code>patch/one_row_per_cta.diff</code></a></td>
+<td style="text-align:left">Unguarded experimental kernel patch used to construct the candidate</td>
+</tr>
+</tbody>
+</table></div>
+<p>The expanded run log, with machine-local paths removed, is included beside the validation CSVs. The repository ignores generated tensors, Python caches, and scratch result folders.</p>
+<p><a id="full-decode"></a></p>
+<h2>8. Full-step timing as an integration check</h2>
+<p>The normalization saving is small compared with the complete decode step. The selected kernels saved about 12 to 23 microseconds across 48 norm calls, while a full step lasted about 12 to 17 milliseconds.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:right">Decode batch</th>
+<th style="text-align:right">Default full step</th>
+<th style="text-align:right">Guarded full step</th>
+<th style="text-align:right">Observed difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:right">12.329 ms</td>
+<td style="text-align:right">12.429 ms</td>
+<td style="text-align:right">+0.100 ms</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:right">12.210 ms</td>
+<td style="text-align:right">12.118 ms</td>
+<td style="text-align:right">-0.092 ms</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">12.409 ms</td>
+<td style="text-align:right">12.357 ms</td>
+<td style="text-align:right">-0.052 ms</td>
+</tr>
+<tr>
+<td style="text-align:right">8</td>
+<td style="text-align:right">12.889 ms</td>
+<td style="text-align:right">12.896 ms</td>
+<td style="text-align:right">+0.007 ms</td>
+</tr>
+<tr>
+<td style="text-align:right">16</td>
+<td style="text-align:right">13.909 ms</td>
+<td style="text-align:right">13.798 ms</td>
+<td style="text-align:right">-0.111 ms</td>
+</tr>
+<tr>
+<td style="text-align:right">32</td>
+<td style="text-align:right">16.893 ms</td>
+<td style="text-align:right">16.866 ms</td>
+<td style="text-align:right">-0.027 ms</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are medians of four round medians. The per-round differences varied by roughly 20 to 320 microseconds and moved in both directions. Batches 1 and 2 used the same installed kernel in both arms yet still moved by about 100 microseconds, which gives a practical noise reference for this laptop measurement.</p>
+<p>The full-step data therefore serves as an integration check: model outputs stayed identical, execution remained stable, and the norm saving remained visible in the component trace. This experiment is not precise enough to attribute a request-level latency change of only a few tens of microseconds. Throughput, TTFT, and TPOT require a serving benchmark with controlled concurrency and a larger workload.</p>
+<p><a id="future-work"></a></p>
+<h2>9. Future experiments</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align:right">No.</th>
+<th style="text-align:left">Experiment</th>
+<th style="text-align:left">Next measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">1</td>
+<td style="text-align:left">Guarded RMSNorm on H100</td>
+<td style="text-align:left">Repeat the paired kernel matrix and model trace on the target architecture, then test production serving traffic.</td>
+</tr>
+<tr>
+<td style="text-align:right">2</td>
+<td style="text-align:left">Gated DeltaNet state update and causal Conv1D</td>
+<td style="text-align:left">Profile the decode critical path, then test block mapping, vectorization, and avoidable memory traffic.</td>
+</tr>
+<tr>
+<td style="text-align:right">3</td>
+<td style="text-align:left">RMSNorm plus downstream fusion</td>
+<td style="text-align:left">Fuse normalization with a real consumer and measure whether removing the intermediate write produces a larger step-level saving.</td>
+</tr>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:left">Small-batch GEMV</td>
+<td style="text-align:left">Identify decode projections that remain memory or launch bound and compare tuned CUDA or Triton kernels with the current backend.</td>
+</tr>
+</tbody>
+</table></div>
+<h3>References</h3>
+<ul>
+<li><a href="https://www.coralbricks.ai/blog/ai-latency-engineering" target="_blank" rel="noopener noreferrer">Coral Bricks: AI latency engineering, 50% faster decoding on H100</a></li>
+<li><a href="https://github.com/Coral-Bricks-AI/reef/tree/33aefaa12d78891bf5ba70a0d96b070d471ecc78/research/qwen36-h100" target="_blank" rel="noopener noreferrer">Coral Bricks: Qwen3.6 H100 experiment archive</a></li>
+<li><a href="https://github.com/flashinfer-ai/flashinfer/blob/v0.6.18/flashinfer/norm/kernels/fused_add_rmsnorm.py" target="_blank" rel="noopener noreferrer">FlashInfer 0.6.18 fused-add RMSNorm implementation</a></li>
+</ul>
+<hr />
+<p><em>Tested environment: NVIDIA RTX 5070 Laptop GPU, SM120, 36 SMs, 8 GB VRAM; SGLang 0.5.21; FlashInfer 0.6.18; PyTorch 2.13.0+cu130; WSL2 Ubuntu 24.04.</em></p>
+<p><a id="conclusion"></a></p>
+<h2>10. Findings and limits</h2>
+<p>This experiment shows that a one-row-per-block mapping reduced a small-grid parallelism limit for the tested fused-add RMSNorm shapes. It reached <strong>1.60x isolated speedup at M=8</strong> and reduced Qwen3.5-2B normalization critical-path time by <strong>12% to 20% at batch 4 to 32</strong> with a guarded <code>4 &lt;= M &lt;= 64</code> dispatch. The installed kernel remains the fallback outside that range.</p>
+<p>More broadly, the result shows that small-M RMSNorm workloads can still contain useful, shape-specific optimization opportunities when the default launch exposes too little parallel work.</p>
+<p>The implementation matched all <strong>117 original kernel cases</strong>, the expanded M, hidden-size, and dtype checks, and all saved model tokens and logits.</p>
+<h3>What this work does not establish</h3>
+<ul>
+<li>An H100 result.</li>
+<li>A Qwen3.6-35B result.</li>
+<li>A production MTP result.</li>
+<li>A request-level throughput, TTFT, or TPOT improvement.</li>
+<li>A dispatch range for GPU architectures beyond SM120.</li>
+</ul>
+</article><aside class="toc" aria-label="On this page"><div class="toc-head">In this article</div>
+<a href="#question">01 / The question</a><a href="#runtime-path">02 / Runtime path</a><a href="#change">03 / The change</a><a href="#kernel-results">04 / Kernel results</a><a href="#correctness">05 / Correctness</a><a href="#model">06 / Model test</a><a href="#reproduce">07 / Reproduce</a><a href="#full-decode">08 / Integration check</a><a href="#future-work">09 / Future work</a><a href="#conclusion">10 / Findings and limits</a>
+</aside></div><footer class="footer">Measured on an RTX 5070 Laptop GPU · Kernel, profiler, and model evidence included · Built as a static page for GitHub Pages</footer></div>
+</body></html>

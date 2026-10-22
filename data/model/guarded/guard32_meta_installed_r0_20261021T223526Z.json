@@ -1,0 +1,23 @@
+{
+  "kernel": "installed",
+  "round": 0,
+  "per_B": {
+    "32": {
+      "kernels_per_step": 307.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[8, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 144.319,
+      "fused_add_exposed_us_per_step": 144.93245442708334,
+      "fused_add_median_dur_us": 2.595,
+      "all_kernels_us_per_step": 17225.854666666666
+    }
+  }
+}

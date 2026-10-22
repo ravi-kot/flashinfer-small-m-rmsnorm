@@ -1,0 +1,91 @@
+{
+  "kernel": "installed",
+  "round": 2,
+  "per_B": {
+    "1": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 67.149,
+      "fused_add_exposed_us_per_step": 65.31486002604167,
+      "fused_add_median_dur_us": 1.366,
+      "all_kernels_us_per_step": 12047.926666666666
+    },
+    "2": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 87.30633333333333,
+      "fused_add_exposed_us_per_step": 85.79345703125,
+      "fused_add_median_dur_us": 1.801,
+      "all_kernels_us_per_step": 12186.091
+    },
+    "4": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 103.033,
+      "fused_add_exposed_us_per_step": 101.464599609375,
+      "fused_add_median_dur_us": 2.169,
+      "all_kernels_us_per_step": 12487.423
+    },
+    "8": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[2, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 110.61733333333332,
+      "fused_add_exposed_us_per_step": 108.94759114583333,
+      "fused_add_median_dur_us": 2.2705,
+      "all_kernels_us_per_step": 13073.089
+    },
+    "16": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[4, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 134.00166666666667,
+      "fused_add_exposed_us_per_step": 130.79117838541666,
+      "fused_add_median_dur_us": 2.44,
+      "all_kernels_us_per_step": 14049.821666666669
+    }
+  }
+}

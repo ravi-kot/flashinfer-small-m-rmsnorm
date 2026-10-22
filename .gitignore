@@ -1,0 +1,16 @@
+__pycache__/
+*.pt
+# Scratch output from local runs; published evidence lives in data/
+repro/results/
+
+# Local publishing notes and superseded experiment copies.
+/PUBLISHING.md
+/repro/dispatch_campaign.py
+/repro/model_bench.py
+/repro/norm_lab.py
+/repro/onerow_patch.py
+/repro/README.md
+/repro/rowmap.py
+/repro/local_cute/
+/data/model/*.csv
+/data/model/*.json

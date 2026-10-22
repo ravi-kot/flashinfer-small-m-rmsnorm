@@ -1,0 +1,21 @@
+--- a/flashinfer/norm/kernels/fused_add_rmsnorm.py
++++ b/flashinfer/norm/kernels/fused_add_rmsnorm.py
+@@ -87,7 +87,8 @@
+         self.copy_bits = self.vec_size * dtype.width
+ 
+         self.threads_per_row = RMSNormKernel._compute_threads_per_row(self.H_per_cta)
+-        self.num_threads = RMSNormKernel._compute_num_threads(self.H_per_cta)
++        # Experimental mapping: use one row per CTA.
++        self.num_threads = self.threads_per_row
+         self.rows_per_block = self.num_threads // self.threads_per_row
+         self.warps_per_row = max(self.threads_per_row // 32, 1)
+ 
+@@ -143,7 +144,7 @@
+         """Estimate shared memory bytes (2 tiles for input + residual)."""
+         H_per_cta = H // cluster_n
+         threads_per_row = RMSNormKernel._compute_threads_per_row(H_per_cta)
+-        num_threads = RMSNormKernel._compute_num_threads(H_per_cta)
++        num_threads = threads_per_row  # Keep the estimate consistent with the launch.
+         rows_per_block = num_threads // threads_per_row
+         warps_per_row = max(threads_per_row // 32, 1)
+ 

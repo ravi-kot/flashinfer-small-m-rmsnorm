@@ -1,0 +1,31 @@
+{
+  "kernel": "1row",
+  "round": 3,
+  "per_B": {
+    "32": {
+      "kernels_per_step": 307.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_1row"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[32, 1, 1]",
+          "[32, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 125.26166666666667,
+      "fused_add_exposed_us_per_step": 126.128662109375,
+      "fused_add_median_dur_us": 2.1695,
+      "all_kernels_us_per_step": 17261.215
+    }
+  },
+  "patch_calls_during_capture_and_run": {
+    "1row": 864,
+    "original": 336
+  },
+  "dispatch_range": [
+    4,
+    64
+  ]
+}

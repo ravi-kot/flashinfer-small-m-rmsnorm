@@ -1,0 +1,61 @@
+== S2 check
+ALL BIT-IDENTICAL
+rowmap_boundary_20261021T220636Z_r0.csv rowmap_kernels_boundary_20261021T220636Z_r0.csv
+rowmap_boundary_20261021T220717Z_r1.csv rowmap_kernels_boundary_20261021T220717Z_r1.csv
+rowmap_boundary_20261021T220757Z_r2.csv rowmap_kernels_boundary_20261021T220757Z_r2.csv
+== S3 H=1024 bfloat16
+ALL BIT-IDENTICAL
+M=1   installed grid=[1, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=1   copy      grid=[1, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=1   1row      grid=[1, 1, 1] block=[32, 1, 1] regs=72 smem=4100 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=8   installed grid=[2, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=8   copy      grid=[2, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=8   1row      grid=[8, 1, 1] block=[32, 1, 1] regs=72 smem=4100 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=64  installed grid=[16, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=64  copy      grid=[16, 1, 1] block=[128, 1, 1] regs=68 smem=16400 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=64  1row      grid=[64, 1, 1] block=[32, 1, 1] regs=72 smem=4100 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+rowmap_sens_H1024_bfloat16_20261021T220846Z_r0.csv rowmap_kernels_sens_H1024_bfloat16_20261021T220846Z_r0.csv
+rowmap_sens_H1024_bfloat16_20261021T220905Z_r1.csv rowmap_kernels_sens_H1024_bfloat16_20261021T220905Z_r1.csv
+== S3 H=2560 bfloat16
+ALL BIT-IDENTICAL
+M=1   installed grid=[1, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=1   copy      grid=[1, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=1   1row      grid=[1, 1, 1] block=[32, 1, 1] regs=158 smem=10244 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=8   installed grid=[2, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=8   copy      grid=[2, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=8   1row      grid=[8, 1, 1] block=[32, 1, 1] regs=158 smem=10244 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=64  installed grid=[16, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=64  copy      grid=[16, 1, 1] block=[128, 1, 1] regs=158 smem=40976 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=64  1row      grid=[64, 1, 1] block=[32, 1, 1] regs=158 smem=10244 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+rowmap_sens_H2560_bfloat16_20261021T220935Z_r0.csv rowmap_kernels_sens_H2560_bfloat16_20261021T220935Z_r0.csv
+rowmap_sens_H2560_bfloat16_20261021T220958Z_r1.csv rowmap_kernels_sens_H2560_bfloat16_20261021T220958Z_r1.csv
+== S3 H=4096 bfloat16
+ALL BIT-IDENTICAL
+M=1   installed grid=[1, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=1   copy      grid=[1, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=1   1row      grid=[1, 1, 1] block=[64, 1, 1] regs=124 smem=16392 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=8   installed grid=[4, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=8   copy      grid=[4, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=8   1row      grid=[8, 1, 1] block=[64, 1, 1] regs=124 smem=16392 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=64  installed grid=[32, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=64  copy      grid=[32, 1, 1] block=[128, 1, 1] regs=124 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=64  1row      grid=[64, 1, 1] block=[64, 1, 1] regs=124 smem=16392 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+rowmap_sens_H4096_bfloat16_20261021T221031Z_r0.csv rowmap_kernels_sens_H4096_bfloat16_20261021T221031Z_r0.csv
+rowmap_sens_H4096_bfloat16_20261021T221057Z_r1.csv rowmap_kernels_sens_H4096_bfloat16_20261021T221057Z_r1.csv
+== S3 H=2048 float16
+ALL BIT-IDENTICAL
+M=1   installed grid=[1, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=1   copy      grid=[1, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=1   1row      grid=[1, 1, 1] block=[32, 1, 1] regs=126 smem=8196 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=8   installed grid=[2, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=8   copy      grid=[2, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=8   1row      grid=[8, 1, 1] block=[32, 1, 1] regs=126 smem=8196 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+M=64  installed grid=[16, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnorm
+M=64  copy      grid=[16, 1, 1] block=[128, 1, 1] regs=126 smem=32784 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_copyFusedA
+M=64  1row      grid=[64, 1, 1] block=[32, 1, 1] regs=126 smem=8196 kernel_cutlass_kernel_local_cutefused_add_rmsnorm_1rowFusedA
+rowmap_sens_H2048_float16_20261021T221140Z_r0.csv rowmap_kernels_sens_H2048_float16_20261021T221140Z_r0.csv
+rowmap_sens_H2048_float16_20261021T221205Z_r1.csv rowmap_kernels_sens_H2048_float16_20261021T221205Z_r1.csv
+== S4 diag
+diag_20261021T221243Z_r0.csv
+diag_20261021T221257Z_r1.csv
+DONE

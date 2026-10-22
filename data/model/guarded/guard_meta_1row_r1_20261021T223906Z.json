@@ -1,0 +1,99 @@
+{
+  "kernel": "1row",
+  "round": 1,
+  "per_B": {
+    "1": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 66.23566666666666,
+      "fused_add_exposed_us_per_step": 64.308349609375,
+      "fused_add_median_dur_us": 1.332,
+      "all_kernels_us_per_step": 12043.249666666668
+    },
+    "2": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 84.17066666666666,
+      "fused_add_exposed_us_per_step": 82.55110677083333,
+      "fused_add_median_dur_us": 1.764,
+      "all_kernels_us_per_step": 12155.017
+    },
+    "4": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_1row"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[4, 1, 1]",
+          "[32, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 90.58,
+      "fused_add_exposed_us_per_step": 89.26822916666667,
+      "fused_add_median_dur_us": 1.884,
+      "all_kernels_us_per_step": 12472.420666666667
+    },
+    "8": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_1row"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[8, 1, 1]",
+          "[32, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 88.479,
+      "fused_add_exposed_us_per_step": 86.89778645833333,
+      "fused_add_median_dur_us": 1.835,
+      "all_kernels_us_per_step": 13042.237666666666
+    },
+    "16": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_1row"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[16, 1, 1]",
+          "[32, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 113.35266666666666,
+      "fused_add_exposed_us_per_step": 110.65738932291667,
+      "fused_add_median_dur_us": 2.07,
+      "all_kernels_us_per_step": 14038.281
+    }
+  },
+  "patch_calls_during_capture_and_run": {
+    "1row": 576,
+    "original": 528
+  },
+  "dispatch_range": [
+    4,
+    64
+  ]
+}

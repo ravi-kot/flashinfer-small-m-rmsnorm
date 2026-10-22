@@ -1,0 +1,91 @@
+{
+  "kernel": "installed",
+  "round": 3,
+  "per_B": {
+    "1": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 68.56266666666666,
+      "fused_add_exposed_us_per_step": 66.67277018229167,
+      "fused_add_median_dur_us": 1.403,
+      "all_kernels_us_per_step": 12085.067333333332
+    },
+    "2": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 106.49033333333334,
+      "fused_add_exposed_us_per_step": 104.63297526041667,
+      "fused_add_median_dur_us": 2.339,
+      "all_kernels_us_per_step": 12429.107000000002
+    },
+    "4": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 102.37666666666667,
+      "fused_add_exposed_us_per_step": 100.80745442708333,
+      "fused_add_median_dur_us": 2.136,
+      "all_kernels_us_per_step": 12478.194000000001
+    },
+    "8": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[2, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 111.22366666666666,
+      "fused_add_exposed_us_per_step": 109.46337890625,
+      "fused_add_median_dur_us": 2.304,
+      "all_kernels_us_per_step": 13073.152333333333
+    },
+    "16": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[4, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 140.05833333333334,
+      "fused_add_exposed_us_per_step": 137.08821614583334,
+      "fused_add_median_dur_us": 2.584,
+      "all_kernels_us_per_step": 14313.255666666666
+    }
+  }
+}

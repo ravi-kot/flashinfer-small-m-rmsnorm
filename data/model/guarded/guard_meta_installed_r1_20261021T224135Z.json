@@ -1,0 +1,91 @@
+{
+  "kernel": "installed",
+  "round": 1,
+  "per_B": {
+    "1": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 70.593,
+      "fused_add_exposed_us_per_step": 68.63907877604167,
+      "fused_add_median_dur_us": 1.44,
+      "all_kernels_us_per_step": 11397.287333333334
+    },
+    "2": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 87.02233333333334,
+      "fused_add_exposed_us_per_step": 85.485595703125,
+      "fused_add_median_dur_us": 1.801,
+      "all_kernels_us_per_step": 12196.653
+    },
+    "4": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[1, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 104.45400000000001,
+      "fused_add_exposed_us_per_step": 102.92911783854167,
+      "fused_add_median_dur_us": 2.169,
+      "all_kernels_us_per_step": 12505.624666666668
+    },
+    "8": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[2, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 110.82266666666668,
+      "fused_add_exposed_us_per_step": 109.057373046875,
+      "fused_add_median_dur_us": 2.298,
+      "all_kernels_us_per_step": 13050.917333333333
+    },
+    "16": {
+      "kernels_per_step": 289.0,
+      "fused_add_norms_per_step": 48.0,
+      "fused_add_kinds": [
+        "fused_add_installed"
+      ],
+      "fused_add_grid_block": [
+        [
+          "[4, 1, 1]",
+          "[128, 1, 1]"
+        ]
+      ],
+      "fused_add_us_per_step": 148.27200000000002,
+      "fused_add_exposed_us_per_step": 145.54606119791666,
+      "fused_add_median_dur_us": 3.1334999999999997,
+      "all_kernels_us_per_step": 14268.953
+    }
+  }
+}
