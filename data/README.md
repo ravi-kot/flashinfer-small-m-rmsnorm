@@ -24,6 +24,8 @@ Guarded-dispatch (4 ≤ M ≤ 64) Qwen3.5-2B runs: `guard_*` for batch 1, 2, 4, 
 
 ## `profiler/`
 
-`ncu_rowmap_m1_4_5_8_metrics.csv` contains the selected Nsight Compute metrics used in the article. The full report remains in the private working directory because Nsight embedded the original WSL command and Linux home path in the binary. Its SHA-256 hash is recorded in `artifact_hashes.sha256` so the local capture can be identified later.
+`ncu_rowmap_m1_4_5_8.ncu-rep` is the full Nsight Compute capture for M = 1, 4, 5, and 8. It includes the unchanged local CuTe copy and the one-row-per-block candidate used for the article's profiler comparison. Open it with NVIDIA Nsight Compute and inspect Launch Statistics, Occupancy, Memory Workload Analysis, and Warp State Statistics. The report preserves the original capture metadata, including the WSL invocation.
+
+`ncu_rowmap_m1_4_5_8_metrics.csv` contains the selected metrics used in the article in a review-friendly text format. The report's SHA-256 hash is recorded in `artifact_hashes.sha256`.
 
 The profiler capture explains execution behavior. It is not a steady-state latency benchmark.

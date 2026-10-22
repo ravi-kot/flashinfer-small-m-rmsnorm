@@ -185,13 +185,16 @@ The supporting files are included with this article and in the [GitHub repositor
 | Path | Purpose |
 | :--- | :--- |
 | [`repro/validation/rowmap.py`](repro/validation/rowmap.py) | Exact correctness, timing, diagnosis, and profiling driver used for the final sweep |
-| [`repro/validation/local_cute/fused_add_rmsnorm_1row.py`](repro/validation/local_cute/fused_add_rmsnorm_1row.py) | Modified CuTe kernel; the unchanged comparison copy is beside it |
+| [`repro/validation/local_cute/fused_add_rmsnorm_1row.py`](repro/validation/local_cute/fused_add_rmsnorm_1row.py) | Modified one-row-per-block CuTe DSL CUDA kernel source |
+| [`repro/validation/local_cute/fused_add_rmsnorm_copy.py`](repro/validation/local_cute/fused_add_rmsnorm_copy.py) | Unchanged local CuTe DSL kernel used as the A/A baseline |
 | [`repro/validation/model_bench.py`](repro/validation/model_bench.py) | Guarded Qwen3.5-2B model A/B runner |
 | [`repro/validation/onerow_patch.py`](repro/validation/onerow_patch.py) | Runtime router used to test the guarded dispatch without modifying installed packages |
+| [`data/profiler/ncu_rowmap_m1_4_5_8.ncu-rep`](data/profiler/ncu_rowmap_m1_4_5_8.ncu-rep) | Full Nsight Compute capture for M=1, 4, 5, and 8 |
+| [`data/profiler/ncu_rowmap_m1_4_5_8_metrics.csv`](data/profiler/ncu_rowmap_m1_4_5_8_metrics.csv) | Selected profiler metrics used in the article |
 | [`data/README.md`](data/README.md) | Guide to raw measurements, metadata, profiler metrics, and artifact hashes |
 | [`patch/one_row_per_cta.diff`](patch/one_row_per_cta.diff) | Unguarded experimental kernel patch used to construct the candidate |
 
-The expanded run log, with machine-local paths removed, is included beside the validation CSVs. The repository ignores generated tensors, Python caches, and scratch result folders.
+The `.ncu-rep` file opens directly in NVIDIA Nsight Compute. It preserves the complete capture metadata and lets reviewers compare launch geometry, SM activity, occupancy, memory traffic, and stall metrics. The expanded run log, with machine-local paths removed, is included beside the validation CSVs. The repository ignores generated tensors, Python caches, and scratch result folders.
 
 ## 8. Full-step timing as an integration check
 

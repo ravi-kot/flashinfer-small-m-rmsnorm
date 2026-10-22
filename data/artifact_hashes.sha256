@@ -1,4 +1,4 @@
-# Omitted Nsight Compute report. The binary embeds the original WSL command and home path.
+# Included Nsight Compute report. The binary preserves the original capture metadata.
 9a77bc5e5f40efdf98ecdf7038793412b3213997a98d83c8ce2fe0baffd55ae6  profiler/ncu_rowmap_m1_4_5_8.ncu-rep
 # Omitted guarded-dispatch model outputs (tokens + final logits, ~30 MB each).
 79c700781265349af39a55e62321c5f645bc91c155a2c7154f9147cd1cb46a3b  model/guarded/guard_tokens_1row_r0_20261021T223632Z.pt
