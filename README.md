@@ -3,6 +3,8 @@
 **A small CUDA block-mapping change, measured from one kernel to a real SGLang model**  
 Ravi Kothari · October 21, 2026 · RTX 5070 Laptop (SM120) · BF16 · H=2048
 
+**Live article:** [ravi-kot.github.io/flashinfer-small-m-rmsnorm](https://ravi-kot.github.io/flashinfer-small-m-rmsnorm/)
+
 | Best isolated result | Best in-model norm result | Correctness |
 | :--- | :--- | :--- |
 | **1.60x speedup** at M=8 | **1.25x critical-path ratio** at batch 8, guarded dispatch | **117/117** kernel cases matched, plus an extended M, H and dtype matrix |
